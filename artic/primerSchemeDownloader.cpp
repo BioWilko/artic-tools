@@ -13,32 +13,32 @@
 namespace pt = boost::property_tree;
 
 // ARTIC_MANIFEST_URL contains all the metadata for the ARTIC Network primer schemes.
-const std::string ARTIC_MANIFEST_URL = "https://raw.githubusercontent.com/artic-network/primer-schemes/master/schemes_manifest.json";
+const std::string ARTIC_MANIFEST_URL = "https://raw.githubusercontent.com/BioWilko/primer-schemes/master/schemes_manifest.json";
 const std::string SCHEME_EXT = ".primer.bed";
 const std::string REF_EXT = ".reference.fasta";
 
 // write2stream is used by curl to download to a stream.
-size_t write2stream(char* ptr, size_t size, size_t nmemb, void* userdata)
+size_t write2stream(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
-    std::stringstream* stream = (std::stringstream*)userdata;
+    std::stringstream *stream = (std::stringstream *)userdata;
     size_t count = size * nmemb;
     stream->write(ptr, count);
     return count;
 }
 
 // write2disk is used by curl to download to disk.
-size_t write2disk(void* ptr, size_t size, size_t nmemb, FILE* stream)
+size_t write2disk(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
     size_t count = fwrite(ptr, size, nmemb, stream);
     return count;
 }
 
 // downloadJSON will download a JSON file from a URL and load it as a JSON object.
-void downloadJSON(const std::string& url, pt::ptree& jsonTree)
+void downloadJSON(const std::string &url, pt::ptree &jsonTree)
 {
 
     // set up curl to write to a stream
-    CURL* curl = curl_easy_init();
+    CURL *curl = curl_easy_init();
     if (!curl)
         throw std::runtime_error("could not init curl for file download");
     std::stringstream stream;
@@ -60,12 +60,12 @@ void downloadJSON(const std::string& url, pt::ptree& jsonTree)
 }
 
 // downloadFile will download a file from a URL and save it on disk.
-void downloadFile(const std::string& url, const std::string& fname)
+void downloadFile(const std::string &url, const std::string &fname)
 {
-    CURL* curl = curl_easy_init();
+    CURL *curl = curl_easy_init();
     if (!curl)
         throw std::runtime_error("could not init curl for file download");
-    FILE* fp = fopen(fname.c_str(), "wb");
+    FILE *fp = fopen(fname.c_str(), "wb");
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write2disk);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
@@ -80,7 +80,7 @@ void downloadFile(const std::string& url, const std::string& fname)
 
 // DownloadScheme will download a specified primer scheme and the reference sequence.
 // if 0 is provided as a version, or an unknown version provided, the latest scheme version will be used.
-void artic::DownloadScheme(SchemeArgs& args)
+void artic::DownloadScheme(SchemeArgs &args)
 {
     LOG_TRACE("\trequested scheme:\t{}", args.schemeName);
     if (args.schemeVersion == 0)
@@ -102,10 +102,10 @@ void artic::DownloadScheme(SchemeArgs& args)
     std::vector<std::string> checkedAliases;
     std::pair<std::string, std::string> primer_url;
     std::pair<std::string, std::string> reference_url;
-    pt::ptree& schemes = manifest.get_child("schemes");
-    for (const auto& scheme : schemes)
+    pt::ptree &schemes = manifest.get_child("schemes");
+    for (const auto &scheme : schemes)
     {
-        for (const auto& alias : scheme.second.get_child("aliases"))
+        for (const auto &alias : scheme.second.get_child("aliases"))
         {
             checkedAliases.push_back(alias.second.data());
             if (!boost::iequals(checkedAliases.back(), args.schemeName))
@@ -113,7 +113,7 @@ void artic::DownloadScheme(SchemeArgs& args)
 
             // check available versions and get the primer_url
             LOG_TRACE("\tfound requested scheme:\t{} (using alias {})", scheme.first, args.schemeName);
-            unsigned int latestVersion = scheme.second.get<unsigned int>("latest_version");
+            float latestVersion = scheme.second.get<float>("latest_version");
             if (args.schemeVersion > latestVersion)
             {
                 LOG_WARN("\trequested version not found (v{}), using latest version instead (v{})", args.schemeVersion, latestVersion);
@@ -133,7 +133,7 @@ void artic::DownloadScheme(SchemeArgs& args)
     {
         LOG_WARN("\tscheme not found:\t{}", args.schemeName);
         LOG_WARN("listing available scheme aliases (case insensitive)", args.schemeName);
-        for (const auto& i : checkedAliases)
+        for (const auto &i : checkedAliases)
             LOG_WARN("\t- {}", i);
         throw std::runtime_error("no primer scheme available for " + args.schemeName);
     }
